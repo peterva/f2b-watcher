@@ -1,0 +1,58 @@
+#!/usr/bin/python
+# Author    : Peter van Arkel <peter@vasercon.nl>
+# Date      : 20120117
+
+import sys
+import subprocess
+
+def whois_route(ip):
+    p = subprocess.Popen("whois " + ip, stdout=subprocess.PIPE, shell=True)
+    for line in p.stdout.readlines():
+        if "route:" in line:
+            line = line.split(' ')
+            route = line[-1].strip('\n')
+            return route
+    retval = p.wait()
+
+def whois_origin(ip):        
+    p = subprocess.Popen("whois " + ip, stdout=subprocess.PIPE, shell=True)
+    for line in p.stdout.readlines():
+        if "origin:" in line:
+            line = line.split(' ')
+            origin = line[-1].strip('\n')
+            return origin
+    retval = p.wait()
+
+lines = tuple(open('/var/log/fail2ban.log', 'r'))
+
+print '::::::::::::::::::::::::'
+print ':: Fail2Ban Daily Log ::'
+print '::::::::::::::::::::::::\n'
+
+print ':: Banned IPs'
+print "{0:<15s} {1:<15s} {2:<15s} {3:<20s} {4:<15s}".format("Date", "Time", "IP", "Source", "Origin")
+print "{0:<15s} {1:<15s} {2:<15s} {3:<20s} {4:<15s}".format("-"*14, "-"*14, "-"*14, "-"*19, "-"*14)
+seen = set()
+for item in lines:
+    item = item.strip('\n')
+    if "fail2ban.actions:" in item and "[postfix]" in item and "Ban" in item:
+        item = item.split(' ')
+        if item[6] not in seen:
+            seen.add(item[6])
+            route = whois_route(item[6])
+            origin = whois_origin(item[6])
+            print "{0:<15s} {1:<15s} {2:<15s} {3:<20s} {4:<15s}".format(item[0], item[1], item[6], route, origin)
+
+print ' '
+print ':: Unbanned IPs'
+print "{0:<15s} {1:<15s} {2:<15s}".format("Date", "Time", "IP")
+print "{0:<15s} {1:<15s} {2:<15s}".format("-"*14, "-"*14, "-"*14)
+seen = set()
+for item in lines:
+    item = item.strip('\n')
+    if "fail2ban.actions:" in item and "[postfix]" in item and "Unban" in item:
+        item = item.split(' ')
+        if item[6] not in seen:
+            seen.add(item[6])
+            print "{0:<15s} {1:<15s} {2:<15s}".format(item[0], item[1], item[6])
+
