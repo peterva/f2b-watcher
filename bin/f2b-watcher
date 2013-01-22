@@ -36,14 +36,16 @@ def unban(name,protocol,port,ip):
             conn.close()
 
 def list(name):
-    try: 
+    try:
         conn = sql.connect(conf_server, conf_user, conf_pass, conf_db);
         cur = conn.cursor()
-        if name == 'all':
-            cur.execute("""SELECT * FROM fail2ban ORDER BY name DESC LIMIT 50""")
-        else:
-            cur.execute("""SELECT * FROM fail2ban WHERE name=%s ORDER BY ip DESC LIMIT 50""", (name))
-    except:
+        cur.execute("""SELECT name,ip,COUNT(ip) FROM fail2ban WHERE name=%s GROUP BY ip  ORDER BY ip DESC LIMIT 50""", (name))
+        data = cur.fetchall()
+        print '\t' + "{0:<15s} {1:<20s} {2:<5s} ".format('Jail', 'IP', 'Times seen')
+        print '\t' + "{0:<15s} {1:<20s} {2:<5s} ".format('='*14, '='*19, '='*10)
+        for i,j,k, in data:
+            print '\t' + "{0:<15s} {1:<20s} {2:<5d} ".format(i, j, k)
+    except sql.Error, e:
         print "Error %d: %s" % (e.args[0],e.args[1])
         sys.exit(1)
     finally:
@@ -51,14 +53,14 @@ def list(name):
             conn.close()
 
 parser = argparse.ArgumentParser(
-    description='f2b-watcher',
+    description='Logmodule for fail2ban so logging is also sent to MySQL',
     prog='f2b-watcher',
-    usage='%(prog)s [-h]',
+    usage='%(prog)s [-h] {ban|unban} <name> <protocol> <port> <ip>',
     )
 action = parser.add_mutually_exclusive_group()
-action.add_argument('--ban', nargs=4, help="")
-action.add_argument('--unban', nargs=4, help="")
-action.add_argument('--list', nargs='?', help="")
+action.add_argument('--ban', metavar='<jailname> <tcp|udp> <port> <ip>', nargs=4, help="needs <jailname> <tcp|udp> <port> <ip>")
+action.add_argument('--unban', metavar='<jailname> <tcp|udp> <port> <ip>',nargs=4, help="needs <jailname> <tcp|udp> <port> <ip>")
+action.add_argument('--list', metavar='<jailname>',nargs=1, help="for now, only accepts proper jailnames, catchall will be implemented soon.")
 args = parser.parse_args()
 
 if len(sys.argv) <= 1:
@@ -68,9 +70,6 @@ elif sys.argv[1] == '--ban':
 elif sys.argv[1] == '--unban':
     unban(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
 elif sys.argv[1] == '--list':
-    if sys.argv[2] is None:
-        list('all')
-    elif sys.argv[2] is not None:
-        list(sys.argv[2])
+    list(sys.argv[2])
 else:
     print parser.print_help()
