@@ -35,7 +35,7 @@ def unban(name,protocol,port,ip):
         if conn:
             conn.close()
 
-def list(name)
+def list(name):
     try: 
         conn = sql.connect(conf_server, conf_user, conf_pass, conf_db);
         cur = conn.cursor()
