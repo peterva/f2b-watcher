@@ -58,9 +58,9 @@ parser = argparse.ArgumentParser(
     usage='%(prog)s [-h] {ban|unban} <name> <protocol> <port> <ip>',
     )
 action = parser.add_mutually_exclusive_group()
-action.add_argument('--ban', metavar='<jailname> <tcp|udp> <port> <ip>', nargs=4, help="needs <jailname> <tcp|udp> <port> <ip>")
-action.add_argument('--unban', metavar='<jailname> <tcp|udp> <port> <ip>',nargs=4, help="needs <jailname> <tcp|udp> <port> <ip>")
-action.add_argument('--list', metavar='<jailname>',nargs=1, help="for now, only accepts proper jailnames, catchall will be implemented soon.")
+action.add_argument('--ban', nargs=4, metavar=('<jailname>', '<protocol>', '<port>', '<ip>'))
+action.add_argument('--unban', nargs=4, metavar=('<jailname>', '<protocol>', '<port>', '<ip>'))
+action.add_argument('--list', nargs=1, metavar='<jailname>')
 args = parser.parse_args()
 
 if len(sys.argv) <= 1:
