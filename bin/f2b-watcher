@@ -28,7 +28,7 @@ def unban(name,protocol,port,ip):
     try:
         conn = sql.connect(conf_server, conf_user, conf_pass, conf_db);
         cur = conn.cursor()
-        cur.execute("""  """, (name, protocol, port, ip))
+        cur.execute("""DELETE FROM fail2ban WHERE name=%s AND protocol=%s AND port=%s AND ip=%s  """, (name, protocol, port, ip))
     except sql.Error, e:
         print "Error %d: %s" % (e.args[0],e.args[1])
         sys.exit(1)
@@ -40,69 +40,17 @@ parser = argparse.ArgumentParser(
     description='f2b-watcher',
     prog='f2b-watcher',
     usage='%(prog)s [-h]',
-    epilog=""
     )
 action = parser.add_mutually_exclusive_group()
 action.add_argument('--ban', nargs=4, help="")
 action.add_argument('--unban', nargs=4, help="")
 args = parser.parse_args()
 
-if sys.argv[1] == '--ban':
-    print args
+if len(sys.argv) <= 1:
+    print parser.print_help()
+elif sys.argv[1] == '--ban':
     ban(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
 elif sys.argv[1] == '--unban':
-    print args
+    unban(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
 else:
     print parser.print_help()
-
-
-#def whois_route(ip):
-#    p = subprocess.Popen("whois " + ip, stdout=subprocess.PIPE, shell=True)
-#    for line in p.stdout.readlines():
-#        if "route:" in line:
-#            line = line.split(' ')
-#            route = line[-1].strip('\n')
-#            return route
-#    retval = p.wait()
-#
-#def whois_origin(ip):        
-#    p = subprocess.Popen("whois " + ip, stdout=subprocess.PIPE, shell=True)
-#    for line in p.stdout.readlines():
-#        if "origin:" in line:
-#            line = line.split(' ')
-#            origin = line[-1].strip('\n')
-#            return origin
-#    retval = p.wait()
-#
-#lines = tuple(open('/var/log/fail2ban.log', 'r'))
-#
-#print '::::::::::::::::::::::::'
-#print ':: Fail2Ban Daily Log ::'
-#print '::::::::::::::::::::::::\n'
-#
-#print ':: Banned IPs'
-#print "{0:<15s} {1:<15s} {2:<15s} {3:<20s} {4:<15s}".format("Date", "Time", "IP", "Source", "Origin")
-#print "{0:<15s} {1:<15s} {2:<15s} {3:<20s} {4:<15s}".format("-"*14, "-"*14, "-"*14, "-"*19, "-"*14)
-#seen = set()
-#for item in lines:
-#    item = item.strip('\n')
-#    if "fail2ban.actions:" in item and "[postfix]" in item and "Ban" in item:
-#        item = item.split(' ')
-#        if item[6] not in seen:
-#            seen.add(item[6])
-#            route = whois_route(item[6])
-#            origin = whois_origin(item[6])
-#            print "{0:<15s} {1:<15s} {2:<15s} {3:<20s} {4:<15s}".format(item[0], item[1], item[6], route, origin)
-#
-#print ' '
-#print ':: Unbanned IPs'
-#print "{0:<15s} {1:<15s} {2:<15s}".format("Date", "Time", "IP")
-#print "{0:<15s} {1:<15s} {2:<15s}".format("-"*14, "-"*14, "-"*14)
-#seen = set()
-#for item in lines:
-#    item = item.strip('\n')
-#    if "fail2ban.actions:" in item and "[postfix]" in item and "Unban" in item:
-#        item = item.split(' ')
-#        if item[6] not in seen:
-#            seen.add(item[6])
-#            print "{0:<15s} {1:<15s} {2:<15s}".format(item[0], item[1], item[6])
